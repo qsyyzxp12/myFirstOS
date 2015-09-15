@@ -1,8 +1,8 @@
-    .code16
+    .code16 
     .section .text
-    .global main
+    .global _start
 
-main:
+_start:
     # FAT12 file system format
     jmp       start_prog       # jmp instruction
     .byte     0x90
@@ -30,27 +30,29 @@ main:
 start_prog:
     movw    $0, %ax            # Initialize register
     movw    %ax, %ss
+    ;movw    $0x7c00, %sp
     movw    %ax, %ds
     movw    %ax, %es
     movw    $msg, %si          # move the address of msg to SI
 
 loop:
-    movb    $0xe, %ah
     movb    (%si), %al        # move the first character of msg to AL register
+    addw    $1, %si
     cmpb    $0, %al
     je      fin
+    movb    $0xe, %ah
+    movw    $15, %bx
     int     $0x10             # write the specific character to console
-    addw    $1, %si
     jmp     loop
 
 fin:
 # do nothing
 
 msg:
-    .ascii "Hello World"
+    .ascii "Hello, World"
     .byte   0
-    .org    0x1FE, 0x00       # fill the rest of characters with zero until the 254th character
 
+    .org    0x1FE, 0x00       # fill the rest of characters with zero until the 254th character
 # Boot sector signature
     .byte     0x55
     .byte     0xaa
