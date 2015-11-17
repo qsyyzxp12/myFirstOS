@@ -3,7 +3,7 @@
 	.global _start
 _start:
 	# FAT32 file system format
-	jmp	start_prog		# jmp instruction
+	jmp	start_prog	# jmp instruction
 	.byte	0x90
 	.ascii	"Chih-An "	# OEM name (8 bytes)
 	.word	0x0200		# Bytes per sector
@@ -33,11 +33,11 @@ _start:
 	.fill	22, 1, 0	# fill 18 characters with zero
 
 start_prog:
-	movw	$0x820, %ax	# write data into address 0x82
+	movw	$0x820, %ax	# write data into address 0x8200
 	movw	%ax, %es
-	movb 	$0x00, %ch	# cylinder no.0
-	movb 	$0x00, %dh	# head	no.0
-	movb	$0x02, %cl	# sector no.2
+	movb 	$0x01, %ch	# cylinder no.2
+	movb 	$0xEE, %dh	# head	no.289
+	movb	$0x03, %cl	# sector no.3
 
 readloop:
 	movw	$0x00, %si	# register for fail times
@@ -48,72 +48,72 @@ retry:
 	movw	$0x00, %bx
 	movb	$0x00, %dl	# a disk
 	int	$0x13
-	jnc	next		# if success, jump to next
+	jnc	next_sector		# if success, jump to next_sector
 	addw	$0x01, %si	# si++
 	cmpw	$5, %si		# if si >= 5
-	jae	error		# jump to error
+	jae	error			# jump to error
 	movb	$0x00, %ah	
 	movb	$0x00, %dl	# reset the disk no. 
 	int 	$0x13
 	jmp	retry
 
-next:
+next_sector:
 	movw	%es, %ax	# address push 0x20
 	addw	$0x20, %ax
 	movw	%ax, %es
+
+	cmpb	$0x12, %cl
+	je	check_read_512_sector_or_not
+
+keep_reading:
 	addb	$0x01, %cl	# next sector
+	cmpb	$0x3E, %cl	# if sector no. <= 62
+	jbe	readloop		# jump to readloop
+	movb	$0x01, %cl
 	
-	movb	%cl, %bh	# extract the lowest 6 bit of %cl
-	movw	$0x02, %ax
-	shl	%ax, %bh
-	shr	%ax, %bh
-
-	cmpb	$62, %bh	# if bh(sector no.) <= 62
-	jbe	readloop	# jump to readloop
-
-	movw	$0x06, %ax	# let the lowest 6 bit of cl to be 1
-	shr	%ax, %cl
-	shl	%ax, %cl
-	addb	$0x01, %cl
-
 	addb	$0x01, %dh	# next head
-	cmpb	$239, %dh	# if dh(head no.) < 239
+	cmpb	$0xEF, %dh	# if dh(head no.) < 239
 	jb	readloop
-	movb	$0, %dh
+	movb	$0x00, %dh
 
-	cmpb	$0xff, %ch	# if ch(cylinder no.) <= 0xff
-	jb	can_ch_add_1_or_not
-	
-	movb	$0x00, %ch
-	addb	$0x40, %cl
-	jmp 	readloop
-
-can_ch_add_1_or_not:
-	cmpb	$253, %ch
-	je	check_cl_highest_two_bit
-
-ch_add_1:	
 	addb	$0x01, %ch
-	jmp 	readloop
+	jb	readloop
 
-checl_cl_highest_two_bit:	
-	movb	%cl, %bh
-	movw	$0x06, %ax
-	shr	%ax, %bh
-	cmpb	%0x03, %bh
-	je	fin
-	jmp	ch_add_1
+check_read_512_sector_or_not:
+	cmpb	$0x07, %dh
+	je	0x8200
+	jmp	keep_reading
 
 fin:
 	jmp	fin
+/*
+success:
+	movw	$0x00, %ax
+	movw	%ax, %ss
+	movw	$0x7c00, %sp
+	movw	%ax, %ds
+	movw	$success_msg, %si
 	
+print_success_msg:
+	movb	$0x0e, %ah
+	movb	(%si), %al
+	cmpb	$0, %al
+	je	next_sector
+	int	$0x10
+	addw	$1, %si
+	jmp	print_success_msg
+
+success_msg:
+	.ascii "1"
+	.byte	0
+*/
 error:
-	movw	$0, %ax
+	movw	$0x00, %ax
 	movw	%ax, %ss
 	movw	$0x7c00, %sp
 	movw	%ax, %ds
 	movw	%ax, %es
-	movw	$error_msg, %si	
+	movw	$error_msg, %si
 
 print_error_msg:
 	movb	$0x0e, %ah

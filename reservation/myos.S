@@ -1,0 +1,19 @@
+	.section .text
+	.global _start
+_start:
+	movb	$0x13, %al
+	movb	$0x00, %ah
+	int 	$0x10
+	
+	movb	$0x08, (0x0ff2)
+	movw	$0x140, (0x0ff4)
+	movw	$0xc8, (0x0ff6)
+	movl	$0x000a0000, (0x0ff8)
+
+	movb	$0x02, %ah
+	int 	$0x16
+	movb	%al, (0x0ff1)
+
+fin:
+	jmp	fin
+
