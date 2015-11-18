@@ -26,7 +26,7 @@ void main()
 			"movb	$0x02, %ah\n\t"
 			"int 	$0x16\n\t"				//keyboard BIOS
 			"movb	%al, (LEDS)\n"
-/*
+
 			"movb	$0xff, %al\n\t"			//MOV		AL,0xff
 			"out	%al, $0x21\n\t"			//OUT		0x21,AL, 將AL或AX的內容輸出到0x21這個I/O port中
 			"nop\n\t"						//no operation
@@ -119,9 +119,9 @@ void main()
 
 			".align	16\n\t"								//ALIGNB	16
 
-		"bootpack:\n\t"*/
+		"bootpack:\n\t"
 		"fin:\n\t"
-				//"HLT\n\t"
+				"HLT\n\t"
 				"jmp	fin"
 	);
 }
