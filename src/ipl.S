@@ -30,7 +30,7 @@ _start:
 	.long	0x9e4cbdce	# disk sequence
 	.ascii	"I'm fat32  "	# Volume Label
 	.ascii	"FAT32   "	# FAT file system type
-	.fill	22, 1, 0	# fill 18 characters with zero
+	.fill	22, 1, 0	# fill 22 characters with zero
 
 start_prog:
 	movw	$0x820, %ax	# write data into address 0x8200
